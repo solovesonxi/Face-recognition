@@ -5,7 +5,6 @@ import cv2
 import threading
 from PIL import Image, ImageTk
 import os
-import numpy as np
 
 
 # 1. 创建主窗口 - 暗黑极简风格

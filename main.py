@@ -1,10 +1,11 @@
+import os
+import threading
 import tkinter as tk
 from tkinter import filedialog, messagebox, Text, ttk
-from deepface import DeepFace
+
 import cv2
-import threading
 from PIL import Image, ImageTk
-import os
+from deepface import DeepFace
 
 
 # 1. 创建主窗口 - 暗黑极简风格
@@ -28,8 +29,8 @@ class FaceRecognitionApp:
         title_frame = tk.Frame(master, bg="#1e1e1e", height=50)
         title_frame.pack(fill="x")
 
-        title_label = tk.Label(title_frame, text="面部识别分析系统", font=("Helvetica", 18, "bold"),
-                               fg="#e0e0e0", bg="#1e1e1e")
+        title_label = tk.Label(title_frame, text="面部识别分析系统", font=("Helvetica", 18, "bold"), fg="#e0e0e0",
+                               bg="#1e1e1e")
         title_label.pack(padx=20)
 
         # 主布局容器
@@ -41,8 +42,7 @@ class FaceRecognitionApp:
         self.sidebar.pack(side="left", fill="y", padx=(0, 10))
 
         # 添加图标占位符
-        icon_placeholder = tk.Label(self.sidebar, text="⚡", font=("Arial", 24),
-                                    bg="#1e1e1e", fg="#4fc3f7")
+        icon_placeholder = tk.Label(self.sidebar, text="⚡", font=("Arial", 24), bg="#1e1e1e", fg="#4fc3f7")
         icon_placeholder.pack(pady=20)
 
         # 功能按钮容器 - 使用Frame实现均匀分布
@@ -50,21 +50,9 @@ class FaceRecognitionApp:
         button_container.pack(fill="both", expand=True)
 
         # 按钮样式
-        button_style = {
-            "font": ("Segoe UI", 12, "bold"),
-            "bg": "#4fc3f7",
-            "fg": "#000000",
-            "activebackground": "#29b6f6",
-            "activeforeground": "#000000",
-            "bd": 0,
-            "highlightthickness": 0,
-            "padx": 15,
-            "pady": 12,
-            "anchor": "center",
-            "relief": "flat",
-            "width": 15,
-            "height": 2
-        }
+        button_style = {"font": ("Segoe UI", 12, "bold"), "bg": "#4fc3f7", "fg": "#000000",
+            "activebackground": "#29b6f6", "activeforeground": "#000000", "bd": 0, "highlightthickness": 0, "padx": 15,
+            "pady": 12, "anchor": "center", "relief": "flat", "width": 15, "height": 2}
 
         # 功能按钮 - 均匀分布
         self.button_verify = tk.Button(button_container, text="人脸验证", command=self.show_verify_screen,
@@ -88,8 +76,7 @@ class FaceRecognitionApp:
         separator.pack(fill="x", pady=10)
 
         # 状态指示器
-        self.status_label = tk.Label(self.sidebar, text="就绪", font=("Segoe UI", 9),
-                                     fg="#9e9e9e", bg="#1e1e1e")
+        self.status_label = tk.Label(self.sidebar, text="就绪", font=("Segoe UI", 9), fg="#9e9e9e", bg="#1e1e1e")
         self.status_label.pack(side="bottom", fill="x", pady=10, padx=10)
 
         # 主要区域 - 输出和图像显示
@@ -113,8 +100,7 @@ class FaceRecognitionApp:
         self.notebook.add(output_tab, text="分析结果")
 
         # 输出文本框
-        self.text_output = Text(output_tab, bg="#252525", fg="#e0e0e0",
-                                wrap="word", font=("Segoe UI", 11),
+        self.text_output = Text(output_tab, bg="#252525", fg="#e0e0e0", wrap="word", font=("Segoe UI", 11),
                                 insertbackground="#e0e0e0", relief="flat")
         self.text_output.pack(fill="both", expand=True, padx=10, pady=10)
 
@@ -139,10 +125,7 @@ class FaceRecognitionApp:
         self.update_status("请选择两张图片进行人脸验证...")
         self.clear_output()
 
-        img1_path = filedialog.askopenfilename(
-            title="选择第一个图像",
-            filetypes=[("图片文件", "*.jpg *.jpeg *.png")]
-        )
+        img1_path = filedialog.askopenfilename(title="选择第一个图像", filetypes=[("图片文件", "*.jpg *.jpeg *.png")])
 
         # 如果用户取消选择，直接返回
         if not img1_path:
@@ -152,10 +135,7 @@ class FaceRecognitionApp:
         self.display_image(img1_path)
         self.update_status(f"已选择图像1: {os.path.basename(img1_path)}")
 
-        img2_path = filedialog.askopenfilename(
-            title="选择第二个图像",
-            filetypes=[("图片文件", "*.jpg *.jpeg *.png")]
-        )
+        img2_path = filedialog.askopenfilename(title="选择第二个图像", filetypes=[("图片文件", "*.jpg *.jpeg *.png")])
 
         # 如果用户取消选择，直接返回
         if not img2_path:
@@ -168,7 +148,7 @@ class FaceRecognitionApp:
         if img1_path and img2_path:
             self.update_status("正在进行人脸验证...")
             try:
-                result = DeepFace.verify(img1_path, img2_path)
+                result = DeepFace.verify(img1_path, img2_path, enforce_detection=False, detector_backend='retinaface')
                 self.notebook.select(1)  # 切换到分析结果标签页
                 verified = "匹配" if result['verified'] else "不匹配"
                 distance = result['distance']
@@ -199,10 +179,8 @@ class FaceRecognitionApp:
         self.update_status("请选择待识别人脸图像和数据库文件夹...")
         self.clear_output()
 
-        img_path = filedialog.askopenfilename(
-            title="选择待识别人脸图像",
-            filetypes=[("图片文件", "*.jpg *.jpeg *.png")]
-        )
+        img_path = filedialog.askopenfilename(title="选择待识别人脸图像",
+            filetypes=[("图片文件", "*.jpg *.jpeg *.png")])
 
         # 如果用户取消选择，直接返回
         if not img_path:
@@ -222,7 +200,8 @@ class FaceRecognitionApp:
         if img_path and db_path:
             self.update_status(f"正在识别人脸，数据库: {db_path}...")
             try:
-                dfs = DeepFace.find(img_path=img_path, db_path=db_path)
+                dfs = DeepFace.find(img_path=img_path, db_path=db_path, enforce_detection=False,
+                                    detector_backend='retinaface')
                 self.notebook.select(1)  # 切换到分析结果标签页
                 self.text_output.insert(tk.END, "===== 人脸识别结果 =====\n", "title")
 
@@ -256,10 +235,7 @@ class FaceRecognitionApp:
         self.update_status("请选择待分析图像...")
         self.clear_output()
 
-        img_path = filedialog.askopenfilename(
-            title="选择待分析图像",
-            filetypes=[("图片文件", "*.jpg *.jpeg *.png")]
-        )
+        img_path = filedialog.askopenfilename(title="选择待分析图像", filetypes=[("图片文件", "*.jpg *.jpeg *.png")])
 
         # 如果用户取消选择，直接返回
         if not img_path:
@@ -269,7 +245,8 @@ class FaceRecognitionApp:
         self.display_image(img_path)
         self.update_status(f"正在分析: {os.path.basename(img_path)}...")
         try:
-            objs = DeepFace.analyze(img_path, actions=['age', 'gender', 'race', 'emotion'])
+            objs = DeepFace.analyze(img_path, actions=['age', 'gender', 'race', 'emotion'], enforce_detection=False,
+                                    detector_backend='retinaface')
             self.notebook.select(1)  # 切换到分析结果标签页
             for obj in objs:
                 # 格式化性别输出
@@ -294,27 +271,14 @@ class FaceRecognitionApp:
                 dominant_race = max(race_data, key=race_data.get)
 
                 # 种族名称映射到中文
-                race_mapping = {
-                    'asian': '亚洲人',
-                    'indian': '印度人',
-                    'black': '黑人',
-                    'white': '白人',
-                    'middle eastern': '中东人',
-                    'latino hispanic': '拉丁裔'
-                }
+                race_mapping = {'asian': '亚洲人', 'indian': '印度人', 'black': '黑人', 'white': '白人',
+                    'middle eastern': '中东人', 'latino hispanic': '拉丁裔'}
 
                 race_str = race_mapping.get(dominant_race, dominant_race)
 
                 # 格式化情感输出
-                emotion_mapping = {
-                    'angry': '生气',
-                    'disgust': '厌恶',
-                    'fear': '恐惧',
-                    'happy': '开心',
-                    'sad': '伤心',
-                    'surprise': '惊讶',
-                    'neutral': '中性'
-                }
+                emotion_mapping = {'angry': '生气', 'disgust': '厌恶', 'fear': '恐惧', 'happy': '开心', 'sad': '伤心',
+                    'surprise': '惊讶', 'neutral': '中性'}
 
                 emotion_str = emotion_mapping.get(obj['dominant_emotion'], obj['dominant_emotion'])
 
@@ -382,9 +346,7 @@ class FaceRecognitionApp:
         self.text_output.insert(tk.END, "按ESC键可退出实时分析\n")
 
         # 更新按钮状态和样式
-        self.button_stream.config(
-            text="停止分析",
-            bg="#ff4081",  # 鲜艳的玫瑰红色
+        self.button_stream.config(text="停止分析", bg="#ff4081",  # 鲜艳的玫瑰红色
             activebackground="#e91e63",  # 更深的玫瑰红
             fg="#ffffff"  # 白色文字更醒目
         )
@@ -413,6 +375,8 @@ class FaceRecognitionApp:
             cv2.namedWindow('Real-time Face Recognition', cv2.WINDOW_NORMAL)
             cv2.resizeWindow('Real-time Face Recognition', 800, 600)
 
+            frame_counter = 0
+
             while self.stream_active:
                 # 检查ESC键
                 if cv2.waitKey(1) == 27:  # 27是ESC键的ASCII码
@@ -421,48 +385,36 @@ class FaceRecognitionApp:
 
                 # 读取帧
                 ret, frame = self.capture.read()
+                frame_counter += 1
                 if not ret:
                     break
-
+                if frame_counter % 2 == 0:
+                    continue
                 # 进行人脸识别
                 try:
-                    # 使用DeepFace.find进行识别
-                    results = DeepFace.find(
-                        img_path=frame,
-                        db_path=db_path,
-                        enforce_detection=False,
-                        silent=True
-                    )
-
-                    # 在帧上绘制结果
+                    results = DeepFace.find(img_path=frame, db_path=db_path, enforce_detection=False, silent=True)
                     if results and not results[0].empty:
-                        # 只取第一个匹配结果
+                        if len(results) > 1:
+                            print(results[0])
+                            print(results[1])
                         result = results[0].iloc[0]
                         identity = os.path.basename(os.path.dirname(result['identity']))
                         distance = result['distance']
                         similarity = (1 - distance) * 100
-
                         # 在图像上显示身份和相似度
                         text = f"{identity}: {similarity:.2f}%"
                         cv2.putText(frame, text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
-                except Exception as e:
-                    # 忽略单帧分析错误
+                except Exception:
                     pass
-
-                # 显示帧
                 cv2.imshow('Real-time Face Recognition', frame)
-
-            # 清理资源
             self.cleanup_stream()
             self.update_status("实时分析已停止")
-
         except Exception as e:
             self.update_status(f"实时分析出错: {str(e)}")
             self.text_output.insert(tk.END, f"错误详情: {str(e)}\n")
             self.cleanup_stream()
         finally:
-            # 确保清理资源
             self.stream_active = False
             self.master.after(0, self.restore_stream_button)
 
@@ -484,12 +436,7 @@ class FaceRecognitionApp:
 
     def restore_stream_button(self):
         """恢复实时分析按钮的原始状态"""
-        self.button_stream.config(
-            text="实时分析",
-            bg="#4fc3f7",  # 恢复原始蓝色
-            activebackground="#29b6f6",  # 恢复原始活动状态颜色
-            fg="#000000"  # 恢复原始文字颜色
-        )
+        self.button_stream.config(text="实时分析", bg="#4fc3f7", activebackground="#29b6f6", fg="#000000")
         # 恢复悬停效果
         self.button_stream.unbind("<Enter>")
         self.button_stream.unbind("<Leave>")
@@ -499,27 +446,16 @@ class FaceRecognitionApp:
     def display_image(self, img_path):
         """显示选中的图片"""
         try:
-            # 切换到图像预览标签页
             self.notebook.select(0)
-
-            # 加载图片
             img = Image.open(img_path)
-
-            # 获取标签页尺寸
             tab_width = self.image_tab.winfo_width() - 20
             tab_height = self.image_tab.winfo_height() - 20
-
             # 调整图片大小以适应窗口
             if tab_width > 0 and tab_height > 0:
                 img.thumbnail((tab_width, tab_height), Image.LANCZOS)
-
-            # 转换为PhotoImage
             img_tk = ImageTk.PhotoImage(img)
-
-            # 更新标签
             self.image_label.config(image=img_tk)
             self.image_label.image = img_tk  # 保持引用
-
             self.update_status(f"显示图像: {os.path.basename(img_path)}")
         except Exception as e:
             self.update_status(f"无法加载图像: {str(e)}")
@@ -539,17 +475,12 @@ class FaceRecognitionApp:
 # 6. 启动应用
 if __name__ == "__main__":
     root = tk.Tk()
-
-    # 设置主题为暗黑风格
     style = ttk.Style()
     style.theme_use('clam')
-
     # 配置暗黑主题颜色
     style.configure('.', background='#121212', foreground='#e0e0e0')
     style.configure('TNotebook', background='#1e1e1e', borderwidth=0)
-    style.configure('TNotebook.Tab', background='#2d2d2d', foreground='#e0e0e0',
-                    padding=[10, 5], font=('Segoe UI', 10))
+    style.configure('TNotebook.Tab', background='#2d2d2d', foreground='#e0e0e0', padding=[10, 5], font=('Segoe UI', 10))
     style.map('TNotebook.Tab', background=[('selected', '#1e1e1e')])
-
     app = FaceRecognitionApp(root)
     root.mainloop()

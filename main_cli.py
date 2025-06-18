@@ -10,7 +10,7 @@ def verify_faces(img1_path, img2_path):
     """人脸验证功能"""
     print(f"正在验证: {img1_path} 和 {img2_path}")
     try:
-        result = DeepFace.verify(img1_path, img2_path)
+        result = DeepFace.verify(img1_path, img2_path, enforce_detection=False, detector_backend='retinaface')
         verified = "匹配" if result['verified'] else "不匹配"
         similarity = 1 - result['distance']
 
@@ -28,7 +28,7 @@ def find_face(img_path, db_path):
     """人脸识别功能"""
     print(f"在数据库 {db_path} 中识别图像 {img_path}")
     try:
-        dfs = DeepFace.find(img_path=img_path, db_path=db_path)
+        dfs = DeepFace.find(img_path=img_path, db_path=db_path, enforce_detection=False, detector_backend='retinaface')
 
         if not dfs or dfs[0].empty:
             print("\n===== 人脸识别结果 =====")
@@ -58,7 +58,7 @@ def analyze_face(img_path):
     """面部属性分析功能"""
     print(f"正在分析图像: {img_path}")
     try:
-        objs = DeepFace.analyze(img_path, actions=['age', 'gender', 'race', 'emotion'])
+        objs = DeepFace.analyze(img_path, actions=['age', 'gender', 'race', 'emotion'], enforce_detection=False, detector_backend='retinaface')
 
         print("\n===== 面部分析结果 =====")
         for i, obj in enumerate(objs):

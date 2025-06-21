@@ -363,51 +363,78 @@ class FaceRecognitionApp:
 
     def stream_analysis(self, db_path):
         try:
-            # 创建VideoCapture对象并保存引用
             self.capture = cv2.VideoCapture(0)
+            self.capture.set(cv2.CAP_PROP_FPS, 30)
             if not self.capture.isOpened():
                 self.update_status("无法打开摄像头")
                 self.text_output.insert(tk.END, "错误: 无法访问摄像头\n")
                 self.stop_stream_analysis()
                 return
-
-            # 设置窗口名称
             cv2.namedWindow('Real-time Face Recognition', cv2.WINDOW_NORMAL)
             cv2.resizeWindow('Real-time Face Recognition', 800, 600)
-
             frame_counter = 0
-
+            cached_results = []  # 存储上一轮分析结果：[{"rect": (x,y,w,h), "text": str, "color": tuple}]
             while self.stream_active:
-                # 检查ESC键
-                if cv2.waitKey(1) == 27:  # 27是ESC键的ASCII码
+                ret, frame = self.capture.read()
+                if not ret:
+                    print("无法从摄像头读取帧！")
+                    break
+                try:
+                    if frame_counter % 3 == 0:
+                        cached_results = []  # 清空缓存
+                        detections = DeepFace.extract_faces(img_path=frame, detector_backend='opencv',
+                                                            enforce_detection=False)
+                        all_results = DeepFace.find(img_path=frame, db_path=db_path, enforce_detection=False,
+                                                    silent=True)
+                        for i, det in enumerate(detections):
+                            facial_area = det['facial_area']
+                            x, y, w, h = facial_area['x'], facial_area['y'], facial_area['w'], facial_area['h']
+                            face_info = {"rect": (x, y, w, h)}
+                            if i < len(all_results):
+                                face_results = all_results[i]
+                                if face_results.empty:
+                                    identity = "no matched"
+                                    similarity = 0
+                                    color = (0, 0, 255)
+                                else:
+                                    best_match = face_results.sort_values('distance').iloc[0]
+                                    if best_match['distance'] <= 0.6:
+                                        identity = os.path.basename(os.path.dirname(best_match['identity']))
+                                        similarity = (1 - best_match['distance']) * 100
+                                        color = (0, 255, 0)
+                                    else:
+                                        identity = "unknown face"
+                                        similarity = 0
+                                        color = (0, 0, 255)
+                            else:
+                                identity = "no results"
+                                similarity = 0
+                                color = (0, 0, 255)
+                            text = f"{identity}: {similarity:.1f}%"
+                            face_info["text"] = text
+                            face_info["color"] = color
+                            cached_results.append(face_info)  # 缓存结果
+                            cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
+                            cv2.putText(frame, text, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
+                    else:
+                        for result in cached_results:
+                            x, y, w, h = result["rect"]
+                            text = result["text"]
+                            color = result["color"]
+                            cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
+                            cv2.putText(frame, text, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
+                except Exception as e:
+                    import traceback
+                    traceback.print_exc()
+                    print(f"发生错误: {e}")
+                    cached_results = []  # 出错时清空缓存
+                cv2.imshow('Real-time Face Recognition', frame)
+                frame_counter = (frame_counter + 1) % 3  # 计数循环0-1-2
+
+                if cv2.waitKey(1) == 27:
                     self.stop_stream_analysis()
                     break
 
-                # 读取帧
-                ret, frame = self.capture.read()
-                frame_counter += 1
-                if not ret:
-                    break
-                if frame_counter % 2 == 0:
-                    continue
-                # 进行人脸识别
-                try:
-                    results = DeepFace.find(img_path=frame, db_path=db_path, enforce_detection=False, silent=True)
-                    if results and not results[0].empty:
-                        if len(results) > 1:
-                            print(results[0])
-                            print(results[1])
-                        result = results[0].iloc[0]
-                        identity = os.path.basename(os.path.dirname(result['identity']))
-                        distance = result['distance']
-                        similarity = (1 - distance) * 100
-                        # 在图像上显示身份和相似度
-                        text = f"{identity}: {similarity:.2f}%"
-                        cv2.putText(frame, text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-
-                except Exception:
-                    pass
-                cv2.imshow('Real-time Face Recognition', frame)
             self.cleanup_stream()
             self.update_status("实时分析已停止")
         except Exception as e:
